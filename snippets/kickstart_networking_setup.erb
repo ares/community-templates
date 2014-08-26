@@ -1,0 +1,61 @@
+<%#
+kind: snippet
+name: kickstart_networking_setup
+description: this will configure your host networking, it configures your primary interface as well
+    as other configures NICs. It supports physical, VLAN and Alias interfaces. It's intended to be
+    called from %post in your kickstart template
+%>
+<% subnet = @host.subnet -%>
+<% dhcp = subnet.dhcp_boot_mode? -%>
+
+real=`ip -o link | grep <%= @host.mac -%> | awk '{print $2;}' | sed s/://`
+<% if @host.has_primary_interface? %>
+cat << EOF > /etc/sysconfig/network-scripts/ifcfg-$real
+BOOTPROTO="<%= dhcp ? 'dhcp' : 'none' -%>"
+<% unless dhcp -%>
+IPADDR="<%= @host.ip -%>"
+NETMASK="<%= subnet.mask -%>"
+<% end -%>
+DEVICE="$real"
+HWADDR="<%= @host.mac -%>"
+ONBOOT=yes
+EOF
+<% end -%>
+
+<% @host.interfaces.each do |interface| %>
+<% next if !interface.managed? || interface.subnet.nil? -%>
+
+<% subnet = interface.subnet -%>
+<% virtual = interface.virtual? -%>
+<% vlan = virtual && subnet.has_vlanid? -%>
+<% alias_type = virtual && !subnet.has_vlanid? && interface.identifier.include?(':') -%>
+<% dhcp = subnet.dhcp_boot_mode? -%>
+
+real=`ip -o link | grep <%= interface.mac -%> | awk '{print $2;}' | sed s/:$//`
+<% if virtual -%>
+real=`echo <%= interface.identifier -%> | sed s/<%= interface.physical_device -%>/$real/`
+<% end -%>
+
+cat << EOF > /etc/sysconfig/network-scripts/ifcfg-$real
+BOOTPROTO="<%= dhcp ? 'dhcp' : 'none' -%>"
+<% unless dhcp -%>
+IPADDR="<%= interface.ip -%>"
+NETMASK="<%= subnet.mask -%>"
+<% end -%>
+DEVICE="$real"
+<% unless virtual -%>
+HWADDR="<%= interface.mac -%>"
+<% end -%>
+ONBOOT=yes
+PEERDNS=no
+PEERROUTES=no
+<% if vlan -%>
+VLAN=yes
+<% elsif alias_type -%>
+TYPE=Alias
+<% end -%>
+EOF
+
+<% end %>
+
+service network restart
