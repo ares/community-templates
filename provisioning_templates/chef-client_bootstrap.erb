@@ -1,0 +1,57 @@
+<% if validation_bootstrap_method? -%>
+echo "Creating validation.pem"
+mkdir /etc/chef
+touch /etc/chef/validation.pem
+chmod 600 /etc/chef/validation.pem
+
+cat << 'EOF' > /etc/chef/validation.pem
+<%= @host.params['chef_validation_private_key'] %>
+EOF
+<% else -%>
+cat << 'EOF' > /etc/chef/client.pem
+<%= @host.chef_private_key %>
+EOF
+<% end -%>
+
+## If chef_server_certificate is present, install it into /etc/chef/trusted_certs
+<% chef_server_certificate = @host.params['chef_server_certificate'] -%>
+<% if !chef_server_certificate.nil? && !chef_server_certificate.empty? -%>
+mkdir -p /etc/chef/trusted_certs
+chmod 0755 /etc/chef/trusted_certs
+cat << 'EOF' > /etc/chef/trusted_certs/chef-server.pem
+<%= chef_server_certificate %>
+EOF
+<% end -%>
+
+echo "Configuring chef client.rb"
+cat << 'EOF' > /etc/chef/client.rb
+log_level        :info
+log_location     STDOUT
+chef_server_url  "<%= @host.params['chef_server_url'] %>"
+validation_client_name "<%= @host.params['chef_validator_name'] -%>"
+file_backup_path   "/var/lib/chef"
+file_cache_path    "/var/cache/chef"
+pid_file           "/var/run/chef/client.pid"
+
+require 'chef_handler_foreman'
+foreman_server_options  :url => "<%= @host.params['chef_handler_foreman_url'] %>"
+foreman_facts_upload    true
+foreman_reports_upload  true
+EOF
+
+# You may set here the default run list for all your nodes
+cat << 'EOF' > /tmp/base.json
+{
+"run_list": ["role[default]"]
+}
+EOF
+
+#first run of chef-client
+echo "First run of chef-client"
+<% chef_args = "-j /tmp/base.json -E #{@host.chef_environment.nil? ? '_default' : @host.chef_environment.name }" -%>
+/usr/local/bin/chef-client <%= chef_args %> || /usr/bin/chef-client <%= chef_args %>
+
+echo "Finished, cleaning"
+rm -f /tmp/base.json
+# you can comment this line to keep validaton.pem (e.g. for debugging purposes)
+rm -f /etc/chef/validation.pem
