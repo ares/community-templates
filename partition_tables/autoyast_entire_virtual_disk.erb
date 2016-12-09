@@ -1,0 +1,11 @@
+<%#
+name: AutoYaST entire virtual disk
+snippet: false
+os_family: Suse
+%>
+  <partitioning  config:type="list">
+    <drive>
+      <device>/dev/vda</device>
+      <use>all</use>
+    </drive>
+  </partitioning>
