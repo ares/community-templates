@@ -1,0 +1,10 @@
+<%#
+name: PXELinux default memdisk
+snippet: false
+kind: PXELinux
+%>
+DEFAULT memdisk
+
+LABEL memdisk
+    KERNEL memdisk
+    APPEND initrd=<%= @initrd %> harddisk raw

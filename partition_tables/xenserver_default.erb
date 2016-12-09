@@ -1,0 +1,10 @@
+<%#
+name: XenServer default
+snippet: false
+os_family: Xenserver
+%>
+<%
+  gueststorage = @host.params['gueststorage'] || 'yes'
+  primary_disk = @host.params['install-disk'] || 'sda'
+-%>
+  <primary-disk gueststorage="<%= gueststorage %>"><%= primary_disk %></primary-disk>
