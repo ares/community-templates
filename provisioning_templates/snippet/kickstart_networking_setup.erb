@@ -3,40 +3,6 @@ name: kickstart_networking_setup
 snippet: true
 model: ProvisioningTemplate
 %>
-<% subnet = @host.subnet -%>
-<% subnet6 = @host.subnet6 -%>
-<% dhcp = subnet.dhcp_boot_mode? -%>
-
-<% if @host.respond_to?(:has_primary_interface?) %>
-<%# Foreman 1.7 - primary interface contained in @host %>
-# primary interface
-real=`ip -o link | grep <%= @host.mac -%> | awk '{print $2;}' | sed s/://`
-<% if @host.has_primary_interface? %>
-cat << EOF > /etc/sysconfig/network-scripts/ifcfg-$real
-BOOTPROTO="<%= dhcp ? 'dhcp' : 'none' -%>"
-<% unless dhcp -%>
-IPADDR="<%= @host.ip -%>"
-NETMASK="<%= subnet.mask -%>"
-<% if subnet.gateway.present? -%>
-GATEWAY="<%= subnet.gateway %>"
-<% end -%>
-<% if @host.ip6.present? -%>
-IPV6INIT=yes
-IPV6_AUTOCONF=no
-IPV6ADDR=<%= @host.ip6 %>
-<% if subnet6.gateway.present? -%>
-IPV6_DEFAULTGW=<%= subnet6.gateway %>
-<% end -%>
-IPV6_PEERDNS=no
-<% end -%>
-<% end -%>
-DEVICE=$real
-HWADDR="<%= @host.mac -%>"
-ONBOOT=yes
-EOF
-<% end -%>
-<% end -%>
-
 <% bonded_interfaces = [] %>
 <% bonds = @host.bond_interfaces %>
 <% bonds.each do |bond| %>
