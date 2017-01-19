@@ -1,6 +1,7 @@
 <%#
 kind: snippet
 name: epel
+description: this template configures EPEL repo
 -%>
 <%
 http_proxy = @host.params['http-proxy'] ? " --httpproxy #{@host.params['http-proxy']}" : nil
