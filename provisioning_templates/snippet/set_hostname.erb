@@ -1,0 +1,25 @@
+<%#
+name: set_hostname
+snippet: true
+model: ProvisioningTemplate
+kind: snippet
+-%>
+if command -v hostnamectl; then
+  hostnamectl set-hostname <%= @hostname %>
+else
+  hostname <%= @hostname %>
+# persist the change to survive reboot
+if [ -d "/etc/sysconfig" ]; then
+    echo "adding HOSTNAME record to /etc/sysconfig/network"
+    sed -i '1s/^/HOSTNAME=<%= @hostname -%>\n/' /etc/sysconfig/network
+  else
+    echo "<%= @hostname -%>" > /etc/hostname
+  fi
+fi
+
+if grep '^127.0.0.1\s*<%= @hostname -%>$' /etc/hosts; then
+  echo "skipping /etc/hosts update, record is already present"
+else
+  echo "adding record to the first line of /etc/hosts"
+  sed -i '1s/^/127.0.0.1   <%= @hostname -%>\n/' /etc/hosts
+fi

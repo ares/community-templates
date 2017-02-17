@@ -1,10 +1,12 @@
 <%#
-kind: finish
 name: Kickstart default finish
+snippet: false
 model: ProvisioningTemplate
+kind: finish
 oses:
 - CentOS
 - Fedora
+- RedHat
 %>
   <%#
   This template accepts the following parameters:
@@ -14,6 +16,7 @@ oses:
   - package_upgrade: boolean (default=true)
   - salt_master: string (default=undef)
   %>
+<%= snippet 'set_hostname', :variables => { :hostname => @host.name } %>
 <% if @host.subnet.respond_to?(:dhcp_boot_mode?) -%>
 <%= snippet 'kickstart_networking_setup' %>
 service network restart
