@@ -1,0 +1,8 @@
+<%#
+name: chef_client_clone
+snippet: true
+model: ProvisioningTemplate
+%>
+echo "This is my version"
+echo "Bootstraping chef"
+<%= snippet_if_exists(@host.params['chef_bootstrap_template'] || 'chef-client omnibus bootstrap') %>

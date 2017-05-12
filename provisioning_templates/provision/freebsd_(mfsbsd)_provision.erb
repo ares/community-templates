@@ -1,8 +1,8 @@
 <%#
-kind: provision
 name: FreeBSD (mfsBSD) provision
-oses:
-- FreeBSD
+snippet: false
+model: ProvisioningTemplate
+kind: provision
 %>
 <%
 proxy_string = @host.params['http-proxy'] ? "http://#{@host.params['http-proxy']}:#{@host.params['http-proxy-port']}" : ''

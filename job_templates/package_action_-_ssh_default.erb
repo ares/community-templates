@@ -1,29 +1,37 @@
 <%#
-kind: job_template
 name: Package Action - SSH Default
 job_category: Packages
 description_format: "%{action} package(s) %{package}"
-provider_type: SSH
+snippet: false
 template_inputs:
 - name: pre_script
-  description: A script to run prior to the package action
-  input_type: user
   required: false
+  input_type: user
+  description: A script to run prior to the package action
   advanced: true
 - name: action
-  description: 'The package action: install, update, or remove'
-  input_type: user
   required: true
-  options: "install\nupdate\nremove\ngroup install\ngroup remove"
+  input_type: user
+  description: 'The package action: install, update, or remove'
+  options: |-
+    install
+    update
+    remove
+    group install
+    group remove
+  advanced: false
 - name: package
+  required: false
+  input_type: user
   description: The name of the package, if any
-  input_type: user
-  required: false
+  advanced: false
 - name: post_script
-  description: A script to run after the package action
-  input_type: user
   required: false
+  input_type: user
+  description: A script to run after the package action
   advanced: true
+provider_type: SSH
+kind: job_template
 %>
 
 <%
