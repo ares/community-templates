@@ -1,7 +1,9 @@
 <%#
-kind: finish
 name: Junos default finish
--%>
+snippet: false
+model: ProvisioningTemplate
+kind: finish
+%>
 system {
     host-name <%= @host %>;
     time-zone <%= @host.params['time-zone'] || 'Etc/UTC' %>;

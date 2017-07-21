@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <%#
-kind: provision
 name: AutoYaST SLES default
-oses:
-- SLES
+snippet: false
+model: ProvisioningTemplate
+kind: provision
 %>
+
 <%
   os_major = @host.operatingsystem.major.to_i
   os_minor = @host.operatingsystem.minor.to_i

@@ -1,7 +1,8 @@
 <%#
-kind: snippet
 name: puppetlabs_repo
--%>
+snippet: true
+model: ProvisioningTemplate
+%>
 <%
 http_proxy   = @host.params['http-proxy'] ? " --httpproxy #{@host.params['http-proxy']}" : nil
 http_port    = @host.params['http-proxy-port'] ? " --httpport #{@host.params['http-proxy-port']}" : nil
@@ -18,6 +19,9 @@ if os_family == 'Redhat'
   else
     repo_os = 'el'
   end
+elsif os_family == 'Suse'
+  repo_host = 'yum.puppetlabs.com'
+  repo_os = 'sles' # PuppetLabs repos only exist for SLES, not OpenSUSE
 elsif os_family == 'Debian'
   repo_host = 'apt.puppetlabs.com'
   repo_os = @host.operatingsystem.release_name
@@ -30,7 +34,7 @@ elsif @host.param_true?('enable-puppetlabs-pc1-repo')
 end
 -%>
 <% if repo_name -%>
-<% if os_family == 'Redhat' -%>
+<% if os_family == 'Redhat' || os_name == 'SLES' -%>
 rpm -Uvh<%= http_proxy %><%= http_port %> https://<%= repo_host %>/<%= repo_name %>-<%= repo_os %>-<%= os_major %>.noarch.rpm
 <% elsif os_family == 'Debian' -%>
 apt-get update

@@ -1,10 +1,9 @@
 <%#
-kind: user_data
 name: Preseed default user data
-oses:
-- Debian
-- Ubuntu
--%>
+snippet: false
+model: ProvisioningTemplate
+kind: user_data
+%>
 #!/bin/bash
 
 <%# Cloud instances frequently have incorrect hosts data %>

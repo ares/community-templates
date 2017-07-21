@@ -1,9 +1,9 @@
 <%#
-kind: provision
 name: XenServer default answerfile
-oses:
-- XenServer
--%>
+snippet: false
+model: ProvisioningTemplate
+kind: provision
+%>
 <%
   subnet = @host.subnet
   dhcp = subnet.dhcp_boot_mode?
