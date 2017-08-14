@@ -1,0 +1,47 @@
+<%#
+name: Regenerate puppet certificate
+job_category: Miscellaneous
+snippet: false
+template_inputs:
+- name: Delete certificate on Puppet CA
+  required: true
+  input_type: user
+  description: If yes is selected, Foreman will contact Puppet CA of a host and remove
+    the certificate from there. However this requires safe mode to be disabled.
+  options: "no\r\nyes"
+  advanced: false
+provider_type: SSH
+kind: job_template
+%>
+
+<% # this template requires safe mode to be disabled -%>
+
+<%= render_template('Service Action - SSH Default', :service => 'puppet', :action => 'stop') -%>
+
+<%- if input('Delete certificate on Puppet CA') == 'yes' %>
+# deleting host certificate on puppet ca proxy
+<%-   if preview? -%>
+#   this would delete a certificate on puppet ca, but running in preview mode
+<%-   else -%>
+<%-     if @host.puppet_ca_proxy.statuses[:puppetca].destroy(@host.name) -%>
+<%=       '# deleted cert on proxy' %>
+<%-     else -%>
+<%=       '# failed to delete the proxy, aborting job' -%>
+<%-       raise('Unable to delete the certificate on Puppet CA proxy, check Foreman proxy logs') -%>
+<%=     end -%>
+<%-   end -%>
+<%- end -%>
+
+ssl_path=`puppet config print ssldir`
+if [ -z "$ssl_path" ]; then
+  echo "ssl path could not be fetched using puppet config"
+else
+  # delete the old cert and key
+  rm -rf $ssl_path
+
+  # generate a new one
+  puppet agent --onetime --no-usecacheonfailure --verbose --tags no_such_tag
+
+<%= render_template('Service Action - SSH Default', :service => 'puppet', :action => 'start') -%>
+fi
+
