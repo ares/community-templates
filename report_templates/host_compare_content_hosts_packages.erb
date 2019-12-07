@@ -1,0 +1,70 @@
+<%#
+name: Host - compare content hosts packages
+snippet: false
+template_inputs:
+- name: Host 1
+  required: true
+  input_type: user
+  advanced: false
+  value_type: plain
+  resource_type: Katello::ActivationKey
+- name: Host 2
+  required: true
+  input_type: user
+  advanced: false
+  value_type: plain
+  resource_type: Katello::ActivationKey
+model: ReportTemplate
+-%>
+<%-  general_lst = [] -%>
+<%-  stage_lst = [] -%>
+<%-  final_lst = [] -%>
+<%-  arch_lst = [] -%>
+<%-  host1 = Host.find_by_name(input("Host 1")) -%>
+<%-  host2 = Host.find_by_name(input("Host 2")) -%>
+<%-  set1 = host1.installed_packages.group_by { |p| p.name } -%>
+<%-  set2 = host2.installed_packages.group_by { |p| p.name } -%>
+<%-  (set1.keys | set2.keys).uniq.each do |package_name| -%>
+<%-    data = { 'Package' => package_name } -%>
+<%-    data[host1.fqdn] = set1[package_name].try(:first).try(:nvra) || '-' -%>
+<%-    data[host2.fqdn] = set2[package_name].try(:first).try(:nvra) || '-' -%>
+<%-    general_lst << data -%>
+<%-  end -%>
+<%-  general_lst.each do |d| -%>
+<%-    ch1_ver = d[host1.fqdn].gsub(d["Package"]+"-","").gsub(/\.el[0-9][^.]*/,"").gsub(/\.[n|x|i].*/,"") -%>
+<%-    ch2_ver = d[host2.fqdn].gsub(d["Package"]+"-","").gsub(/\.el[0-9][^.]*/,"").gsub(/\.[n|x|i].*/,"") -%>
+<%-    arch_lst << d[host1.fqdn].split(/\./).last -%>
+<%-    arch_lst << d[host2.fqdn].split(/\./).last -%>
+<%-    arch_lst = arch_lst.uniq -%>
+<%-    arch_lst.delete("-") -%>
+<%-    if ch1_ver == "-" -%>
+<%-      status = "#{host2.fqdn} only"-%>
+<%-    elsif ch2_ver == "-" -%>
+<%-      status = "#{host1.fqdn} only"-%>
+<%-    elsif ch1_ver > ch2_ver -%>
+<%-      status = "greater in #{host1.fqdn}"-%>
+<%-    elsif ch1_ver < ch2_ver -%>
+<%-      status = "lower in #{host1.fqdn}"-%>
+<%-    else  -%>
+<%-      status = "same version"-%>
+<%-    end -%>
+<%-  stage_lst = { 'Package' => d["Package"] } -%>
+<%-  stage_lst['arch'] = arch_lst[0] -%>
+<%-  stage_lst['ch1'] = d[host1.fqdn] -%>
+<%-  stage_lst['ch2'] = d[host2.fqdn] -%>
+<%-  stage_lst['status'] = status -%>
+<%- arch_lst=[] -%>
+<%-  final_lst << stage_lst -%>
+<%-  end -%>
+<%- final_lst.each do |fl| -%>
+<%-
+      report_row(
+          'Package': fl['Package'],
+          "#{host1.fqdn}": fl['ch1'],
+          "#{host2.fqdn}": fl['ch2'],
+          'Arch': fl['arch'],
+          'Status': fl['status']
+          )
+-%>
+<%- end -%>
+<%= report_render -%>
