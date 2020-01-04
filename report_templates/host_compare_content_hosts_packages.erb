@@ -16,55 +16,54 @@ template_inputs:
   resource_type: Katello::ActivationKey
 model: ReportTemplate
 -%>
-<%-  general_lst = [] -%>
-<%-  stage_lst = [] -%>
-<%-  final_lst = [] -%>
-<%-  arch_lst = [] -%>
-<%-  host1 = Host.find_by_name(input("Host 1")) -%>
-<%-  host2 = Host.find_by_name(input("Host 2")) -%>
-<%-  set1 = host1.installed_packages.group_by { |p| p.name } -%>
-<%-  set2 = host2.installed_packages.group_by { |p| p.name } -%>
-<%-  (set1.keys | set2.keys).uniq.each do |package_name| -%>
-<%-    data = { 'Package' => package_name } -%>
-<%-    data[host1.fqdn] = set1[package_name].try(:first).try(:nvra) || '-' -%>
-<%-    data[host2.fqdn] = set2[package_name].try(:first).try(:nvra) || '-' -%>
-<%-    general_lst << data -%>
-<%-  end -%>
-<%-  general_lst.each do |d| -%>
-<%-    ch1_ver = d[host1.fqdn].gsub(d["Package"]+"-","").gsub(/\.el[0-9][^.]*/,"").gsub(/\.[n|x|i].*/,"") -%>
-<%-    ch2_ver = d[host2.fqdn].gsub(d["Package"]+"-","").gsub(/\.el[0-9][^.]*/,"").gsub(/\.[n|x|i].*/,"") -%>
-<%-    arch_lst << d[host1.fqdn].split(/\./).last -%>
-<%-    arch_lst << d[host2.fqdn].split(/\./).last -%>
-<%-    arch_lst = arch_lst.uniq -%>
-<%-    arch_lst.delete("-") -%>
-<%-    if ch1_ver == "-" -%>
-<%-      status = "#{host2.fqdn} only"-%>
-<%-    elsif ch2_ver == "-" -%>
-<%-      status = "#{host1.fqdn} only"-%>
-<%-    elsif ch1_ver > ch2_ver -%>
-<%-      status = "greater in #{host1.fqdn}"-%>
-<%-    elsif ch1_ver < ch2_ver -%>
-<%-      status = "lower in #{host1.fqdn}"-%>
-<%-    else  -%>
-<%-      status = "same version"-%>
-<%-    end -%>
-<%-  stage_lst = { 'Package' => d["Package"] } -%>
-<%-  stage_lst['arch'] = arch_lst[0] -%>
-<%-  stage_lst['ch1'] = d[host1.fqdn] -%>
-<%-  stage_lst['ch2'] = d[host2.fqdn] -%>
-<%-  stage_lst['status'] = status -%>
-<%- arch_lst=[] -%>
-<%-  final_lst << stage_lst -%>
-<%-  end -%>
-<%- final_lst.each do |fl| -%>
-<%-
-      report_row(
-          'Package': fl['Package'],
-          "#{host1.fqdn}": fl['ch1'],
-          "#{host2.fqdn}": fl['ch2'],
-          'Arch': fl['arch'],
-          'Status': fl['status']
-          )
+<%- general_list = [] -%>
+<%- stage_list = [] -%>
+<%- final_list = [] -%>
+<%- arch_list = [] -%>
+<%- host1 = load_hosts(search: "name = #{input('Host 1')}").first.first -%>
+<%- host2 = load_hosts(search: "name = #{input('Host 2')}").first.first -%>
+<%- set1 = host1.installed_packages.group_by { |p| p.name } -%>
+<%- set2 = host2.installed_packages.group_by { |p| p.name } -%>
+<%- (set1.keys | set2.keys).uniq.each do |package_name| -%>
+<%-   data = { 'Package' => package_name } -%>
+<%-   data.store(host1.name, set1.key?(package_name) ? set1[package_name].first.nvra : '-') -%>
+<%-   data.store(host2.name, set2.key?(package_name) ? set2[package_name].first.nvra : '-') -%>
+<%-   general_list << data -%>
+<%- end -%>
+<%- general_list.each do |d| -%>
+<%-   ch1_ver = d[host1.name].gsub(d["Package"] + "-", "").gsub(/\.el[0-9][^.]*/, "").gsub(/\.[n|x|i].*/, "") -%>
+<%-   ch2_ver = d[host2.name].gsub(d["Package"] + "-", "").gsub(/\.el[0-9][^.]*/, "").gsub(/\.[n|x|i].*/, "") -%>
+<%-   arch_list << d[host1.name].split(/\./).last -%>
+<%-   arch_list << d[host2.name].split(/\./).last -%>
+<%-   arch_list = arch_list.uniq -%>
+<%-   arch_list.delete("-") -%>
+<%-   if ch1_ver == "-" -%>
+<%-     status = "#{host2.name} only"-%>
+<%-   elsif ch2_ver == "-" -%>
+<%-     status = "#{host1.name} only"-%>
+<%-   elsif ch1_ver > ch2_ver -%>
+<%-     status = "greater in #{host1.name}"-%>
+<%-   elsif ch1_ver < ch2_ver -%>
+<%-     status = "lower in #{host1.name}"-%>
+<%-   else  -%>
+<%-     status = "same version"-%>
+<%-   end -%>
+<%-   stage_list = { 'Package' => d["Package"] } -%>
+<%-   stage_list.store('arch', arch_list[0]) -%>
+<%-   stage_list.store('ch1', d[host1.name]) -%>
+<%-   stage_list.store('ch2', d[host2.name]) -%>
+<%-   stage_list.store('status', status) -%>
+<%-   arch_list = [] -%>
+<%-   final_list << stage_list -%>
+<%- end -%>
+<%- final_list.each do |fl| -%>
+<%-   report_row(
+        'Package': fl['Package'],
+        "#{host1.name}": fl['ch1'],
+        "#{host2.name}": fl['ch2'],
+        'Arch': fl['arch'],
+        'Status': fl['status']
+      )
 -%>
 <%- end -%>
 <%= report_render -%>
