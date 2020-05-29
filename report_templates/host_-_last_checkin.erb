@@ -1,0 +1,27 @@
+<%#
+name: Host - Last Checkin
+snippet: false
+template_inputs:
+- name: Search
+  required: false
+  input_type: user
+  description: A time search after which the Host is considered inactive. It can be
+    any search syntax, e.g. "last_checking < "4 hours ago" and os = RedHat "
+  advanced: false
+  value_type: search
+  resource_type: Host
+  default: last_checkin < "5 hours ago"
+model: ReportTemplate
+require:
+- plugin: katello
+￼ version: 3.16.0
+%>
+<%- load_hosts(search: "#{input('Search')}", preload: [ :subscription_facet, :interfaces ]).each_record do |host| -%>
+<%- report_headers('Name', 'IP', 'Last Checkin') -%>
+<%-   report_row(
+        'Name': host.name,
+        'IP': host.ip,
+        'Last Checkin': last_checkin(host),
+      ) -%>
+<%- end -%>
+<%= report_render -%>
