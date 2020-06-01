@@ -21,6 +21,7 @@ require:
 <%-   report_row(
         'Name': host.name,
         'IP': host.ip,
+        'IPv6': host.ip6,
         'Last Checkin': last_checkin(host),
       ) -%>
 <%- end -%>
